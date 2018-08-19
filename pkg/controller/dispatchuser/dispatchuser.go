@@ -3,6 +3,9 @@ package dispatchuser
 import (
 	"time"
 	"strings"
+	"log"
+	"fmt"
+
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -13,17 +16,19 @@ import (
 	dispatchuser_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/dispatchuser/v1"
 	ownednamespace_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/ownednamespace/v1"
 	dispatchuser_api "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/hantaowang/dispatch/pkg/cmd"
-
-	"log"
-	"fmt"
 
 	informer_v1 "k8s.io/client-go/informers/core/v1"
 	lister_v1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/kubernetes/pkg/controller"
 
 	dispatchuser "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
+)
+
+const (
+	namespace = "dispatch"
 )
 
 // NamespaceController is responsible for performing actions dependent upon a namespace phase
@@ -36,12 +41,14 @@ type DispatchUserController struct {
 	// lister that can list DispatchUsers from a shared cache
 	duLister dispatchuser_lister.DispatchUserLister
 	onLister ownednamespace_lister.OwnedNamespaceLister
-	saLister lister_v1.ServiceAccountLister
 
 	// returns true when the DispatchUser cache is ready
 	duListerSynced cache.InformerSynced
 	onListerSynced cache.InformerSynced
 	saListerSynced cache.InformerSynced
+
+	// service account control
+	saControl	ServiceAccountControl
 
 	// clients to modify resources
 	clientsets	cmd.ClientSets
@@ -98,7 +105,11 @@ func NewDispatchUserController(
 	duc.onLister = onInformer.Lister()
 	duc.onListerSynced = onInformer.Informer().HasSynced
 
-	duc.saLister = saInformer.Lister()
+	duc.saControl = RealServiceAccountControl{
+		saLister: saInformer.Lister().ServiceAccounts(namespace),
+		client: clientSets.OriginalClient,
+	}
+
 	duc.saListerSynced = saInformer.Informer().HasSynced
 
 	return duc
@@ -145,8 +156,22 @@ func (duc *DispatchUserController) processNextWorkItem() bool {
 	}
 
 	if err != nil {
+		log.Printf("Error processing DispatchUser %s: %s", event.action, err)
 		return false
 	}
 
 	return true
+}
+
+func (duc *DispatchUserController) addHandler(e DispatchUserEvent) error {
+	_, err := duc.saControl.Create("dispatch:" + e.new.Spec.UserID)
+	return err
+}
+
+func (duc *DispatchUserController) updateHandler(e DispatchUserEvent) error {
+	return nil
+}
+
+func (duc *DispatchUserController) deleteHandler(e DispatchUserEvent) error {
+	return nil
 }

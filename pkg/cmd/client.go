@@ -5,14 +5,14 @@ import (
 	"log"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	ownednamespace_v1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/ownednamespace/v1"
-	dispatchuser_v1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/dispatchuser/v1"
+	ownednamespace_client "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/ownednamespace/v1"
+	dispatchuser_client "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/dispatchuser/v1"
 )
 
 type ClientSets struct {
 	OriginalClient			kubernetes.Interface
-	OwnedNamespaceClient 	ownednamespace_v1.NetsysV1Interface
-	DispatchUserClient		dispatchuser_v1.NetsysV1Interface
+	OwnedNamespaceClient 	ownednamespace_client.NetsysV1Interface
+	DispatchUserClient		dispatchuser_client.NetsysV1Interface
 }
 
 // retrieve the Kubernetes cluster client from outside of the cluster
@@ -32,12 +32,12 @@ func GetKubernetesClient() ClientSets {
 		log.Fatalf("getClusterConfig: %v", err)
 	}
 
-	ownedNamespaceClient, err := ownednamespace_v1.NewForConfig(config)
+	ownedNamespaceClient, err := ownednamespace_client.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("getClusterConfig: %v", err)
 	}
 
-	dispatchUserClient, err := dispatchuser_v1.NewForConfig(config)
+	dispatchUserClient, err := dispatchuser_client.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("getClusterConfig: %v", err)
 	}

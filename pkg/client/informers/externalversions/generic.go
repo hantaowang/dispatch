@@ -21,7 +21,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1 "github.com/hantaowang/dispatch/pkg/apis/ownednamespace/v1"
+	v1 "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -53,8 +53,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=netsys.io, Version=v1
-	case v1.SchemeGroupVersion.WithResource("ownednamespaces"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Netsys().V1().OwnedNamespaces().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("dispatchusers"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Netsys().V1().DispatchUsers().Informer()}, nil
 
 	}
 

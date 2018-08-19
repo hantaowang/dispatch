@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	netsysv1 "github.com/hantaowang/dispatch/pkg/apis/ownednamespace/v1"
+	netsysv1 "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

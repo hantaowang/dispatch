@@ -8,7 +8,7 @@ import (
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// OwnedNamespace is a namespace that has been claimed by a User
+// OwnedNamespace is a namespace that has been claimed by a DispatchUser
 type OwnedNamespace struct {
 	meta_v1.TypeMeta `json:",inline"`
 	meta_v1.ObjectMeta `json:"metadata,omitempty"`

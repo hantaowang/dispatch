@@ -20,8 +20,8 @@ package fake
 
 import (
 	clientset "github.com/hantaowang/dispatch/pkg/client/clientset/versioned"
-	netsysv1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/ownednamespace/v1"
-	fakenetsysv1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/ownednamespace/v1/fake"
+	netsysv1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/dispatchuser/v1"
+	fakenetsysv1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/dispatchuser/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

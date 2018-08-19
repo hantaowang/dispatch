@@ -19,7 +19,7 @@ limitations under the License.
 package versioned
 
 import (
-	netsysv1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/ownednamespace/v1"
+	netsysv1 "github.com/hantaowang/dispatch/pkg/client/clientset/versioned/typed/dispatchuser/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

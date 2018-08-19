@@ -24,8 +24,8 @@ import (
 	time "time"
 
 	versioned "github.com/hantaowang/dispatch/pkg/client/clientset/versioned"
+	dispatchuser "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/dispatchuser"
 	internalinterfaces "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/internalinterfaces"
-	ownednamespace "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/ownednamespace"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -172,9 +172,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Netsys() ownednamespace.Interface
+	Netsys() dispatchuser.Interface
 }
 
-func (f *sharedInformerFactory) Netsys() ownednamespace.Interface {
-	return ownednamespace.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Netsys() dispatchuser.Interface {
+	return dispatchuser.New(f, f.namespace, f.tweakListOptions)
 }

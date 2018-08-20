@@ -26,16 +26,16 @@
 
 
 [[constraint]]
-  version = "kubernetes-1.10.6"
+  version = "kubernetes-1.11.2"
   name = "k8s.io/apimachinery"
 
 [[constraint]]
-  version = "1.10.6"
+  version = "1.11.2"
   name = "k8s.io/kubernetes"
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "7.0.0"
+  version = "8.0.0"
 
 [prune]
   go-tests = true

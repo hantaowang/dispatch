@@ -3,14 +3,7 @@ package cmd
 import (
 	"github.com/hantaowang/dispatch/pkg/client"
 	"github.com/hantaowang/dispatch/pkg/controller/dispatchuser"
-	dispatchuser_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/dispatchuser/v1"
-	ownednamespace_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/ownednamespace/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 
-	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/apimachinery/pkg/runtime"
 	"github.com/hantaowang/dispatch/pkg/client/informers/externalversions"
 	"k8s.io/client-go/informers"
 )

@@ -10,19 +10,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/api/errors"
-	ownednamespace_lister "github.com/hantaowang/dispatch/pkg/client/listers/ownednamespace/v1"
-	dispatchuser_lister "github.com/hantaowang/dispatch/pkg/client/listers/dispatchuser/v1"
-	dispatchuser_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/dispatchuser/v1"
-	ownednamespace_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/ownednamespace/v1"
-	dispatchuser_api "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
-	core_v1 "k8s.io/api/core/v1"
+	netsys_lister "github.com/hantaowang/dispatch/pkg/client/listers/netsysio/v1"
+	netsys_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/netsysio/v1"
+	netsys_v1 "github.com/hantaowang/dispatch/pkg/apis/netsysio/v1"
 
 	informer_v1 "k8s.io/client-go/informers/core/v1"
-	lister_v1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/kubernetes/pkg/controller"
 
-	dispatchuser "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
 	"github.com/hantaowang/dispatch/pkg/client"
 )
 
@@ -38,8 +32,8 @@ type DispatchUserController struct {
 	schema.GroupVersionKind
 
 	// lister that can list DispatchUsers from a shared cache
-	duLister dispatchuser_lister.DispatchUserLister
-	onLister ownednamespace_lister.OwnedNamespaceLister
+	duLister netsys_lister.DispatchUserLister
+	onLister netsys_lister.OwnedNamespaceLister
 
 	// returns true when the DispatchUser cache is ready
 	duListerSynced cache.InformerSynced
@@ -58,20 +52,20 @@ type DispatchUserController struct {
 
 type DispatchUserEvent struct {
 	action		string
-	old			dispatchuser.DispatchUser
-	new			dispatchuser.DispatchUser
+	old			netsys_v1.DispatchUser
+	new			netsys_v1.DispatchUser
 }
 
 // NewNamespaceController creates a new NamespaceController
 func NewDispatchUserController(
-	duInformer	dispatchuser_informer.DispatchUserInformer,
-	onInformer ownednamespace_informer.OwnedNamespaceInformer,
+	duInformer	netsys_informer.DispatchUserInformer,
+	onInformer  netsys_informer.OwnedNamespaceInformer,
 	saInformer	informer_v1.ServiceAccountInformer,
 	clientSets client.ClientSets,
 	) *DispatchUserController {
 
 	duc := &DispatchUserController{
-		GroupVersionKind: dispatchuser_api.SchemeGroupVersion.WithKind("DispatchUser"),
+		GroupVersionKind: netsys_v1.SchemeGroupVersion.WithKind("DispatchUser"),
 		clientsets: clientSets,
 		workqueue: make(chan DispatchUserEvent, 100),
 	}
@@ -80,20 +74,20 @@ func NewDispatchUserController(
 		AddFunc:    func(obj interface{}) {
 			duc.workqueue <- DispatchUserEvent{
 				action: "add",
-				new: obj.(dispatchuser.DispatchUser),
+				new: obj.(netsys_v1.DispatchUser),
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			duc.workqueue <- DispatchUserEvent{
 				action: "update",
-				old: oldObj.(dispatchuser.DispatchUser),
-				new: newObj.(dispatchuser.DispatchUser),
+				old: oldObj.(netsys_v1.DispatchUser),
+				new: newObj.(netsys_v1.DispatchUser),
 			}
 		},
 		DeleteFunc:    func(obj interface{}) {
 			duc.workqueue <- DispatchUserEvent{
 				action: "delete",
-				old: obj.(dispatchuser.DispatchUser),
+				old: obj.(netsys_v1.DispatchUser),
 			}
 		},
 	})

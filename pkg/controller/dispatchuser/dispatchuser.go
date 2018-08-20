@@ -25,6 +25,7 @@ import (
 	"k8s.io/kubernetes/pkg/controller"
 
 	dispatchuser "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
+	"github.com/hantaowang/dispatch/pkg/client"
 )
 
 const (
@@ -51,7 +52,7 @@ type DispatchUserController struct {
 	saControl	ServiceAccountControl
 
 	// clients to modify resources
-	clientsets	cmd.ClientSets
+	clientsets	client.ClientSets
 
 	// Buffered channel of events to be done
 	workqueue 	chan DispatchUserEvent
@@ -68,7 +69,7 @@ func NewDispatchUserController(
 	duInformer	dispatchuser_informer.DispatchUserInformer,
 	onInformer ownednamespace_informer.OwnedNamespaceInformer,
 	saInformer	informer_v1.ServiceAccountInformer,
-	clientSets cmd.ClientSets,
+	clientSets client.ClientSets,
 	) *DispatchUserController {
 
 	duc := &DispatchUserController{

@@ -18,8 +18,6 @@ import (
 	dispatchuser_api "github.com/hantaowang/dispatch/pkg/apis/dispatchuser/v1"
 	core_v1 "k8s.io/api/core/v1"
 
-	"github.com/hantaowang/dispatch/pkg/cmd"
-
 	informer_v1 "k8s.io/client-go/informers/core/v1"
 	lister_v1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/kubernetes/pkg/controller"

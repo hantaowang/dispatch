@@ -14,7 +14,6 @@ import (
 	netsys_v1 "github.com/hantaowang/dispatch/pkg/apis/netsysio/v1"
 
 	informer_v1 "k8s.io/client-go/informers/core/v1"
-	"k8s.io/kubernetes/pkg/controller"
 
 	"github.com/hantaowang/dispatch/pkg/client"
 )
@@ -112,11 +111,11 @@ func (duc *DispatchUserController) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 
 	controllerName := strings.ToLower(duc.Kind)
-	fmt.Printf("Starting %v controller", controllerName)
-	defer fmt.Printf("Shutting down %v controller", controllerName)
+	fmt.Printf("Starting %v controller\n", controllerName)
+	defer fmt.Printf("Shutting down %v controller\n", controllerName)
 
-	if !controller.WaitForCacheSync(duc.Kind, stopCh, duc.duListerSynced, duc.onListerSynced, duc.saListerSynced) {
-		return
+	for !(duc.duListerSynced() && duc.onListerSynced() && duc.saListerSynced()) {
+		time.Sleep(time.Second)
 	}
 
 	for i := 0; i < workers; i++ {

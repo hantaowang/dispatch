@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:5c3894b2aa4d6bead0ceeea6831b305d62879c871780e7b76296ded1b004bc57"
+  name = "cloud.google.com/go"
+  packages = ["compute/metadata"]
+  pruneopts = "UT"
+  revision = "64a2037ec6be8a4b0c1d1f706ed35b428b989239"
+  version = "v0.26.0"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -198,10 +206,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:425e53b90bd805997e6fd8cca2eb940131fc684e1c84c6c8b6190ff365b540db"
+  digest = "1:35ba347e3103f78545dc70b848c94deea0389de12021481295d8b0681e23765b"
   name = "golang.org/x/net"
   packages = [
     "context",
+    "context/ctxhttp",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -209,6 +218,20 @@
   ]
   pruneopts = "UT"
   revision = "aaf60122140d3fcf75376d319f0554393160eb50"
+
+[[projects]]
+  branch = "master"
+  digest = "1:bea0314c10bd362ab623af4880d853b5bad3b63d0ab9945c47e461b8d04203ed"
+  name = "golang.org/x/oauth2"
+  packages = [
+    ".",
+    "google",
+    "internal",
+    "jws",
+    "jwt",
+  ]
+  pruneopts = "UT"
+  revision = "3d292e4d0cdc3a0113e6d207bb137145ef1de42f"
 
 [[projects]]
   branch = "master"
@@ -251,6 +274,25 @@
   packages = ["rate"]
   pruneopts = "UT"
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
+
+[[projects]]
+  digest = "1:c8907869850adaa8bd7631887948d0684f3787d0912f1c01ab72581a6c34432e"
+  name = "google.golang.org/appengine"
+  packages = [
+    ".",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api",
+    "internal/urlfetch",
+    "urlfetch",
+  ]
+  pruneopts = "UT"
+  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:2d1fbdc6777e5408cabeb02bf336305e724b925ff4546ded0fa8715a7267922a"
@@ -395,7 +437,7 @@
   revision = "850c31c762a4bd730ed750fa0a2e1810b7f8d33d"
 
 [[projects]]
-  digest = "1:16c96787e343080514e3fe123e146f5fdc1790ee7463cc3f4b3c2efb9ea8f1bc"
+  digest = "1:7bef93164fd7cfa38ee764e7d4ddb9594901b3845e24828157bb84789bdc7532"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -502,9 +544,11 @@
     "pkg/apis/clientauthentication/v1beta1",
     "pkg/version",
     "plugin/pkg/client/auth/exec",
+    "plugin/pkg/client/auth/gcp",
     "rest",
     "rest/watch",
     "testing",
+    "third_party/forked/golang/template",
     "tools/auth",
     "tools/cache",
     "tools/clientcmd",
@@ -522,6 +566,7 @@
     "util/flowcontrol",
     "util/homedir",
     "util/integer",
+    "util/jsonpath",
     "util/retry",
   ]
   pruneopts = "UT"
@@ -600,6 +645,7 @@
     "k8s.io/client-go/informers/core/v1",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/listers/core/v1",
+    "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",

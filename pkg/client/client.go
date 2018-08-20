@@ -2,10 +2,12 @@ package client
 
 import (
 	"os"
-	"log"
+	"fmt"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	netsys_client "github.com/hantaowang/dispatch/pkg/client/clientset/versioned"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
 )
 
 type ClientSets struct {
@@ -21,21 +23,27 @@ func GetKubernetesClient() ClientSets {
 	// create the config from the path
 	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
-		log.Fatalf("getClusterConfig: %v", err)
+		panic(fmt.Sprintf("GetClusterConfig config: %v", err))
+
 	}
+
+	fmt.Println("Successfully constructed config")
 
 	// generate the client based off of the config
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Fatalf("getClusterConfig: %v", err)
+		panic(fmt.Sprintf("GetClusterConfig originalClient: %v", err))
 	}
+
+	fmt.Println("Successfully constructed k8s client")
+
 
 	customClient, err := netsys_client.NewForConfig(config)
 	if err != nil {
-		log.Fatalf("getClusterConfig: %v", err)
+		panic(fmt.Sprintf("GetClusterConfig customClient: %v", err))
 	}
 
-	log.Println("Successfully constructed k8s client")
+	fmt.Println("Successfully constructed custom client")
 
 	return ClientSets{
 		OriginalClient: client,

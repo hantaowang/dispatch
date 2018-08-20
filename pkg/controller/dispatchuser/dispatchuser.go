@@ -3,7 +3,6 @@ package dispatchuser
 import (
 	"time"
 	"strings"
-	"log"
 	"fmt"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -113,8 +112,8 @@ func (duc *DispatchUserController) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 
 	controllerName := strings.ToLower(duc.Kind)
-	log.Printf("Starting %v controller", controllerName)
-	defer log.Printf("Shutting down %v controller", controllerName)
+	fmt.Printf("Starting %v controller", controllerName)
+	defer fmt.Printf("Shutting down %v controller", controllerName)
 
 	if !controller.WaitForCacheSync(duc.Kind, stopCh, duc.duListerSynced, duc.onListerSynced, duc.saListerSynced) {
 		return
@@ -149,7 +148,7 @@ func (duc *DispatchUserController) processNextWorkItem() bool {
 	}
 
 	if err != nil {
-		log.Printf("Error processing DispatchUser %s: %s", event.action, err)
+		fmt.Printf("Error processing DispatchUser %s: %s", event.action, err)
 		return false
 	}
 

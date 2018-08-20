@@ -22,8 +22,8 @@ func Start(stopCh chan struct{}) {
 	netsysInformerFactory := externalversions.NewSharedInformerFactory(clientsets.NetsysClient, 0)
 	originalInformerFactory := informers.NewSharedInformerFactory(clientsets.OriginalClient, 0)
 
-	sharedDispatchUserInformer := netsysInformerFactory.DispatchUser().V1().DispatchUsers()
-	sharedOwnedNamespaceInformer := netsysInformerFactory.OwnedNamespace().V1().OwnedNamespaces()
+	sharedDispatchUserInformer := netsysInformerFactory.Netsys().V1().DispatchUsers()
+	sharedOwnedNamespaceInformer := netsysInformerFactory.Netsys().V1().OwnedNamespaces()
 
 	sharedServiceAccountInformer := originalInformerFactory.Core().V1().ServiceAccounts()
 

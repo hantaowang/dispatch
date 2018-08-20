@@ -2,7 +2,6 @@ package dispatchuser
 
 import (
 	"time"
-	"strings"
 	"fmt"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -110,9 +109,8 @@ func NewDispatchUserController(
 func (duc *DispatchUserController) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 
-	controllerName := strings.ToLower(duc.Kind)
-	fmt.Printf("Starting %v controller\n", controllerName)
-	defer fmt.Printf("Shutting down %v controller\n", controllerName)
+	fmt.Printf("Starting %s controller\n", duc.Kind)
+	defer fmt.Printf("Shutting down %v controller\n", duc.Kind)
 
 	for !(duc.duListerSynced() && duc.onListerSynced() && duc.saListerSynced()) {
 		time.Sleep(time.Second)
@@ -128,6 +126,7 @@ func (duc *DispatchUserController) Run(workers int, stopCh <-chan struct{}) {
 // worker runs a worker thread that just dequeues items, processes them, and marks them done.
 // It enforces that the syncHandler is never invoked concurrently with the same key.
 func (duc *DispatchUserController) worker() {
+	fmt.Printf("Starting a %s worker\n", duc.Kind)
 	for duc.processNextWorkItem() {
 	}
 }

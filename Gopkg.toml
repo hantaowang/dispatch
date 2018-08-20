@@ -37,6 +37,10 @@
   name = "k8s.io/client-go"
   version = "8.0.0"
 
+[[override]]
+  name = "github.com/docker/distribution"
+  branch = "master"
+
 [prune]
   go-tests = true
   unused-packages = true

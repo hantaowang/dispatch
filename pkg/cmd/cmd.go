@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/hantaowang/dispatch/pkg/client"
 	"github.com/hantaowang/dispatch/pkg/controller/dispatchuser"
+	"github.com/hantaowang/dispatch/pkg/controller/ownednamespace"
 
 	"github.com/hantaowang/dispatch/pkg/client/informers/externalversions"
 	"k8s.io/client-go/informers"
@@ -28,11 +29,14 @@ func Start(stopCh chan struct{}) {
 	go sharedOwnedNamespaceInformer.Informer().Run(stopCh)
 	go sharedDispatchUserInformer.Informer().Run(stopCh)
 
-	fmt.Println("Creating Controller")
+	fmt.Println("Creating Controllers")
 	duc := dispatchuser.NewDispatchUserController(sharedDispatchUserInformer, sharedOwnedNamespaceInformer,
 		sharedServiceAccountInformer, clientsets)
+	onc := ownednamespace.NewOwnedNamespaceController(sharedOwnedNamespaceInformer, clientsets)
 
+	fmt.Println("Running Controllers")
 	go duc.Run(1, stopCh)
+	go onc.Run(1, stopCh)
 
 	<- stopCh
 }

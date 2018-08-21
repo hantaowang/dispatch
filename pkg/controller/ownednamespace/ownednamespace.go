@@ -1,4 +1,4 @@
-package dispatchuser
+package ownednamespace
 
 import (
 	"time"
@@ -12,9 +12,6 @@ import (
 	netsys_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/netsysio/v1"
 	netsys_v1 "github.com/hantaowang/dispatch/pkg/apis/netsysio/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	informer_v1 "k8s.io/client-go/informers/rbac/v1"
-	lister_v1 "k8s.io/client-go/listers/rbac/v1"
 
 	rbac_v1 "k8s.io/api/rbac/v1"
 
@@ -67,12 +64,18 @@ func NewOwnedNamespaceController(
 
 	onInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(obj interface{}) {
+			if obj.(*netsys_v1.OwnedNamespace).Namespace != dispatchNamespace {
+				return
+			}
 			onc.workqueue <- OwnedNamespaceEvent{
 				action: "add",
 				new: obj.(*netsys_v1.OwnedNamespace),
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
+			if newObj.(*netsys_v1.OwnedNamespace).Namespace != dispatchNamespace {
+				return
+			}
 			onc.workqueue <- OwnedNamespaceEvent{
 				action: "update",
 				old: oldObj.(*netsys_v1.OwnedNamespace),
@@ -80,6 +83,9 @@ func NewOwnedNamespaceController(
 			}
 		},
 		DeleteFunc:    func(obj interface{}) {
+			if obj.(*netsys_v1.OwnedNamespace).Namespace != dispatchNamespace {
+				return
+			}
 			onc.workqueue <- OwnedNamespaceEvent{
 				action: "delete",
 				old: obj.(*netsys_v1.OwnedNamespace),
@@ -138,6 +144,7 @@ func (onc *OwnedNamespaceController) processNextWorkItem() bool {
 		fmt.Printf("Error processing OwnedNamespace %s: %s", event.action, err)
 		return false
 	}
+	fmt.Println("Processed OwnedNamespace %s", event.action)
 
 	return true
 }
@@ -145,8 +152,8 @@ func (onc *OwnedNamespaceController) processNextWorkItem() bool {
 func (onc *OwnedNamespaceController) addHandler(e OwnedNamespaceEvent) error {
 	rb := rbac_v1.RoleBinding{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      controller.NameFunc(e.new.Spec.OwnerID, e.new.Namespace),
-			Namespace: e.new.Namespace,
+			Name:      controller.NameFunc(e.new.Spec.OwnerID, e.new.Spec.Namespace),
+			Namespace: e.new.Spec.Namespace,
 		},
 		Subjects: []rbac_v1.Subject{
 			{
@@ -162,11 +169,11 @@ func (onc *OwnedNamespaceController) addHandler(e OwnedNamespaceEvent) error {
 		},
 	}
 
-	_, err := onc.clientsets.OriginalClient.RbacV1().RoleBindings(e.new.Namespace).Create(&rb)
+	_, err := onc.clientsets.OriginalClient.RbacV1().RoleBindings(e.new.Spec.Namespace).Create(&rb)
 
 	return err
 }
 
 func (onc *OwnedNamespaceController) deleteHandler(e OwnedNamespaceEvent) error {
-	return onc.clientsets.OriginalClient.RbacV1().RoleBindings(e.old.Namespace).Delete(e.old.Spec.OwnerID, nil)
+	return onc.clientsets.OriginalClient.RbacV1().RoleBindings(e.old.Spec.Namespace).Delete(e.old.Spec.OwnerID, nil)
 }

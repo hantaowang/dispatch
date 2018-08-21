@@ -70,12 +70,18 @@ func NewDispatchUserController(
 
 	duInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(obj interface{}) {
+			if obj.(*netsys_v1.DispatchUser).Namespace != dispatchNamespace {
+				return
+			}
 			duc.workqueue <- DispatchUserEvent{
 				action: "add",
 				new: obj.(*netsys_v1.DispatchUser),
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
+			if newObj.(*netsys_v1.DispatchUser).Namespace != dispatchNamespace {
+				return
+			}
 			duc.workqueue <- DispatchUserEvent{
 				action: "update",
 				old: oldObj.(*netsys_v1.DispatchUser),
@@ -83,6 +89,9 @@ func NewDispatchUserController(
 			}
 		},
 		DeleteFunc:    func(obj interface{}) {
+			if obj.(*netsys_v1.DispatchUser).Namespace != dispatchNamespace {
+				return
+			}
 			duc.workqueue <- DispatchUserEvent{
 				action: "delete",
 				old: obj.(*netsys_v1.DispatchUser),
@@ -162,7 +171,7 @@ func (duc *DispatchUserController) processNextWorkItem() bool {
 
 func (duc *DispatchUserController) addHandler(e DispatchUserEvent) error {
 	_, err := duc.saControl.Create(e.new.Spec.UserID)
-	if err != nil {
+	if err != nil && err.Error() != "already exists" {
 		return err
 	}
 	return duc.syncOwnedNamespaces(e.new)

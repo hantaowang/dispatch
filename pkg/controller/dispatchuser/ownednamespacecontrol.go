@@ -45,7 +45,7 @@ func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v
 	_, err := ronc.original_client.CoreV1().Namespaces().Get(namespace, meta_v1.GetOptions{})
 	if errors.IsNotFound(err) {
 		nSpec := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: namespace}}
-		nil, err = ronc.original_client.CoreV1().Namespaces().Create(nSpec)
+		_, err = ronc.original_client.CoreV1().Namespaces().Create(nSpec)
 	}
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v
 			on := netsys_v1.OwnedNamespace{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: controller.NameFunc(owner, namespace),
-					Namespace: namespace,
+					Namespace: dispatchNamespace,
 					Labels: map[string]string{
 						"ownerID": owner,
 					},

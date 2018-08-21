@@ -33,17 +33,17 @@ func (rsac RealServiceAccountControl) Get(name string) (*v1.ServiceAccount, erro
 func (rsac RealServiceAccountControl) Create(name string) (*v1.ServiceAccount, error) {
 	if _, err := rsac.Get(name); err != nil {
 		if errors.IsNotFound(err) {
-			sa := v1.ServiceAccount{
+			sa := &v1.ServiceAccount{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      name,
 					Namespace: dispatchNamespace,
 				},
 			}
-			return rsac.client.CoreV1().ServiceAccounts(dispatchNamespace).Create(&sa)
+			return rsac.client.CoreV1().ServiceAccounts(dispatchNamespace).Create(sa)
 		} else {
 			return nil, err
 		}
-	}else {
+	} else {
 		return nil, fmt.Errorf("already exists")
 	}
 }

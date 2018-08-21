@@ -10,6 +10,8 @@ import (
 	netsys_client "github.com/hantaowang/dispatch/pkg/client/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 
+	"github.com/hantaowang/dispatch/pkg/controller"
+
 	"fmt"
 )
 
@@ -35,7 +37,7 @@ func (ronc RealOwnedNamespaceControl) ListForUser(owner string) ([]*netsys_v1.Ow
 }
 
 func (ronc RealOwnedNamespaceControl) Get(owner, namespace string) (*netsys_v1.OwnedNamespace, error) {
-	return ronc.onLister.Get(nameFunc(owner, namespace))
+	return ronc.onLister.Get(controller.NameFunc(owner, namespace))
 }
 
 func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v1.OwnedNamespace, error) {
@@ -53,7 +55,7 @@ func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v
 		if errors.IsNotFound(err) {
 			on := netsys_v1.OwnedNamespace{
 				ObjectMeta: meta_v1.ObjectMeta{
-					Name: nameFunc(owner, namespace),
+					Name: controller.NameFunc(owner, namespace),
 					Namespace: namespace,
 					Labels: map[string]string{
 						"ownerID": owner,
@@ -75,12 +77,9 @@ func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v
 
 func (ronc RealOwnedNamespaceControl) Delete(owner, namespace string) error {
 	if _, err := ronc.Get(owner, namespace); err != nil && errors.IsNotFound(err){
-		return ronc.netsys_client.NetsysV1().OwnedNamespaces(dispatchNamespace).Delete(nameFunc(owner, namespace), nil)
+		return ronc.netsys_client.NetsysV1().OwnedNamespaces(dispatchNamespace).Delete(controller.NameFunc(owner, namespace), nil)
 	} else {
 		return err
 	}
 }
 
-func nameFunc(owner, namespace string) string {
-	return fmt.Sprintf("%s-%s", owner, namespace)
-}

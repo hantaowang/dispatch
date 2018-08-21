@@ -1,0 +1,8 @@
+apiVersion: netsys.io/v1
+kind: DispatchUser
+metadata:
+  name: hantaowang
+spec:
+  userID: "12345"
+  namespaces:
+    - test-namespace

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	namespace = "dispatch"
+	dispatch_namespace = "dispatch"
 )
 
 // NamespaceController is responsible for performing actions dependent upon a namespace phase
@@ -37,8 +37,9 @@ type DispatchUserController struct {
 	onListerSynced cache.InformerSynced
 	saListerSynced cache.InformerSynced
 
-	// service account control
+	// resource controls
 	saControl	ServiceAccountControl
+	onControl	OwnedNamespaceControl
 
 	// clients to modify resources
 	clientsets	client.ClientSets
@@ -49,8 +50,8 @@ type DispatchUserController struct {
 
 type DispatchUserEvent struct {
 	action		string
-	old			netsys_v1.DispatchUser
-	new			netsys_v1.DispatchUser
+	old			*netsys_v1.DispatchUser
+	new			*netsys_v1.DispatchUser
 }
 
 // NewNamespaceController creates a new NamespaceController
@@ -71,20 +72,20 @@ func NewDispatchUserController(
 		AddFunc:    func(obj interface{}) {
 			duc.workqueue <- DispatchUserEvent{
 				action: "add",
-				new: obj.(netsys_v1.DispatchUser),
+				new: obj.(*netsys_v1.DispatchUser),
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			duc.workqueue <- DispatchUserEvent{
 				action: "update",
-				old: oldObj.(netsys_v1.DispatchUser),
-				new: newObj.(netsys_v1.DispatchUser),
+				old: oldObj.(*netsys_v1.DispatchUser),
+				new: newObj.(*netsys_v1.DispatchUser),
 			}
 		},
 		DeleteFunc:    func(obj interface{}) {
 			duc.workqueue <- DispatchUserEvent{
 				action: "delete",
-				old: obj.(netsys_v1.DispatchUser),
+				old: obj.(*netsys_v1.DispatchUser),
 			}
 		},
 	})
@@ -96,8 +97,14 @@ func NewDispatchUserController(
 	duc.onListerSynced = onInformer.Informer().HasSynced
 
 	duc.saControl = RealServiceAccountControl{
-		saLister: saInformer.Lister().ServiceAccounts(namespace),
+		saLister: saInformer.Lister().ServiceAccounts(dispatch_namespace),
 		client: clientSets.OriginalClient,
+	}
+
+	duc.onControl = RealOwnedNamespaceControl{
+		onLister: onInformer.Lister().OwnedNamespaces(dispatch_namespace),
+		original_client: clientSets.OriginalClient,
+		netsys_client: clientSets.NetsysClient,
 	}
 
 	duc.saListerSynced = saInformer.Informer().HasSynced
@@ -138,7 +145,7 @@ func (duc *DispatchUserController) processNextWorkItem() bool {
 	if event.action == "add" {
 		err = duc.addHandler(event)
 	} else if event.action == "update" {
-		err = duc.updateHandler(event)
+		err = duc.syncOwnedNamespaces(event.new)
 	} else if event.action == "delete" {
 		err = duc.deleteHandler(event)
 	} else {
@@ -154,14 +161,60 @@ func (duc *DispatchUserController) processNextWorkItem() bool {
 }
 
 func (duc *DispatchUserController) addHandler(e DispatchUserEvent) error {
-	_, err := duc.saControl.Create("dispatch:" + e.new.Spec.UserID)
-	return err
+	_, err := duc.saControl.Create(e.new.Spec.UserID)
+	if err != nil {
+		return err
+	}
+	return duc.syncOwnedNamespaces(e.new)
 }
 
-func (duc *DispatchUserController) updateHandler(e DispatchUserEvent) error {
+func (duc *DispatchUserController) syncOwnedNamespaces(u *netsys_v1.DispatchUser) error {
+	currentNamespaces, err := duc.onControl.ListForUser(u.Spec.UserID)
+	if err != nil {
+		return err
+	}
+	currentSet := make(map[string]bool, len(currentNamespaces))
+	futureSet := make(map[string]bool, len(u.Spec.Namespaces))
+
+	for _, n := range currentNamespaces {
+		currentSet[n.Spec.Namespace] = true
+	}
+	for _, n := range u.Spec.Namespaces {
+		futureSet[n] = true
+	}
+
+	for k := range currentSet {
+		if _, ok := futureSet[k]; !ok {
+			err = duc.onControl.Delete(u.Spec.UserID, k)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for k := range futureSet {
+		if _, ok := currentSet[k]; !ok {
+			_, err = duc.onControl.Create(u.Spec.UserID, k)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
 func (duc *DispatchUserController) deleteHandler(e DispatchUserEvent) error {
+	err := duc.saControl.Delete(e.new.Spec.UserID)
+	if err != nil {
+		return err
+	}
+	currentNamespaces, err := duc.onControl.ListForUser(e.old.Spec.UserID)
+	for _, n := range currentNamespaces {
+		err = duc.onControl.Delete(e.old.Spec.UserID, n.Spec.Namespace)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

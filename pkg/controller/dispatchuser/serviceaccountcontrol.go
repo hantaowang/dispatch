@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"fmt"
 )
 
 type ServiceAccountControl interface {
@@ -31,22 +32,26 @@ func (rsac RealServiceAccountControl) Get(name string) (*v1.ServiceAccount, erro
 }
 
 func (rsac RealServiceAccountControl) Create(name string) (*v1.ServiceAccount, error) {
-	if _, err := rsac.Get(name); err != nil && errors.IsNotFound(err){
-		sa := v1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-				Namespace: namespace,
-			},
+	if _, err := rsac.Get(name); err != nil {
+		if errors.IsNotFound(err) {
+			sa := v1.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: dispatch_namespace,
+				},
+			}
+			return rsac.client.CoreV1().ServiceAccounts(dispatch_namespace).Create(&sa)
+		} else {
+			return nil, err
 		}
-		return rsac.client.CoreV1().ServiceAccounts(namespace).Create(&sa)
-	} else {
-		return nil, err
+	}else {
+		return nil, fmt.Errorf("already exists")
 	}
 }
 
 func (rsac RealServiceAccountControl) Delete(name string) error {
 	if _, err := rsac.Get(name); err != nil && errors.IsNotFound(err){
-		return rsac.client.CoreV1().ServiceAccounts(namespace).Delete(name, nil)
+		return rsac.client.CoreV1().ServiceAccounts(dispatch_namespace).Delete(name, nil)
 	} else {
 		return err
 	}

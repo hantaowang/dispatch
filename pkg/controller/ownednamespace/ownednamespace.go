@@ -11,120 +11,101 @@ import (
 	netsys_lister "github.com/hantaowang/dispatch/pkg/client/listers/netsysio/v1"
 	netsys_informer "github.com/hantaowang/dispatch/pkg/client/informers/externalversions/netsysio/v1"
 	netsys_v1 "github.com/hantaowang/dispatch/pkg/apis/netsysio/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	informer_v1 "k8s.io/client-go/informers/core/v1"
+	informer_v1 "k8s.io/client-go/informers/rbac/v1"
+	lister_v1 "k8s.io/client-go/listers/rbac/v1"
+
+	rbac_v1 "k8s.io/api/rbac/v1"
 
 	"github.com/hantaowang/dispatch/pkg/client"
+	"github.com/hantaowang/dispatch/pkg/controller"
+
 )
 
 const (
-	dispatch_namespace = "dispatch"
+	dispatchNamespace = "dispatch"
 )
 
 // NamespaceController is responsible for performing actions dependent upon a namespace phase
-type DispatchUserController struct {
+type OwnedNamespaceController struct {
 	// GroupVersionKind indicates the controller type.
 	// Different instances of this struct may handle different GVKs.
 	// For example, this struct can be used (with adapters) to handle ReplicationController.
 	schema.GroupVersionKind
 
 	// lister that can list DispatchUsers from a shared cache
-	duLister netsys_lister.DispatchUserLister
 	onLister netsys_lister.OwnedNamespaceLister
 
 	// returns true when the DispatchUser cache is ready
-	duListerSynced cache.InformerSynced
-	onListerSynced cache.InformerSynced
-	saListerSynced cache.InformerSynced
-
-	// resource controls
-	saControl	ServiceAccountControl
-	onControl	OwnedNamespaceControl
+	onListerSynced 	cache.InformerSynced
 
 	// clients to modify resources
 	clientsets	client.ClientSets
 
 	// Buffered channel of events to be done
-	workqueue 	chan DispatchUserEvent
+	workqueue 	chan OwnedNamespaceEvent
 }
 
-type DispatchUserEvent struct {
+type OwnedNamespaceEvent struct {
 	action		string
-	old			*netsys_v1.DispatchUser
-	new			*netsys_v1.DispatchUser
+	old			*netsys_v1.OwnedNamespace
+	new			*netsys_v1.OwnedNamespace
 }
 
-// NewNamespaceController creates a new NamespaceController
-func NewDispatchUserController(
-	duInformer	netsys_informer.DispatchUserInformer,
+// NewOwnedNamespaceController creates a new OwnedNamespaceController
+func NewOwnedNamespaceController(
 	onInformer  netsys_informer.OwnedNamespaceInformer,
-	saInformer	informer_v1.ServiceAccountInformer,
 	clientSets client.ClientSets,
-	) *DispatchUserController {
+	) *OwnedNamespaceController {
 
-	duc := &DispatchUserController{
-		GroupVersionKind: netsys_v1.SchemeGroupVersion.WithKind("DispatchUser"),
+	onc := &OwnedNamespaceController{
+		GroupVersionKind: netsys_v1.SchemeGroupVersion.WithKind("OwnedNamespace"),
 		clientsets: clientSets,
-		workqueue: make(chan DispatchUserEvent, 100),
+		workqueue: make(chan OwnedNamespaceEvent, 100),
 	}
 
-	duInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	onInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(obj interface{}) {
-			duc.workqueue <- DispatchUserEvent{
+			onc.workqueue <- OwnedNamespaceEvent{
 				action: "add",
-				new: obj.(*netsys_v1.DispatchUser),
+				new: obj.(*netsys_v1.OwnedNamespace),
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			duc.workqueue <- DispatchUserEvent{
+			onc.workqueue <- OwnedNamespaceEvent{
 				action: "update",
-				old: oldObj.(*netsys_v1.DispatchUser),
-				new: newObj.(*netsys_v1.DispatchUser),
+				old: oldObj.(*netsys_v1.OwnedNamespace),
+				new: newObj.(*netsys_v1.OwnedNamespace),
 			}
 		},
 		DeleteFunc:    func(obj interface{}) {
-			duc.workqueue <- DispatchUserEvent{
+			onc.workqueue <- OwnedNamespaceEvent{
 				action: "delete",
-				old: obj.(*netsys_v1.DispatchUser),
+				old: obj.(*netsys_v1.OwnedNamespace),
 			}
 		},
 	})
 
-	duc.duLister = duInformer.Lister()
-	duc.duListerSynced = duInformer.Informer().HasSynced
+	onc.onLister = onInformer.Lister()
+	onc.onListerSynced = onInformer.Informer().HasSynced
 
-	duc.onLister = onInformer.Lister()
-	duc.onListerSynced = onInformer.Informer().HasSynced
-
-	duc.saControl = RealServiceAccountControl{
-		saLister: saInformer.Lister().ServiceAccounts(dispatch_namespace),
-		client: clientSets.OriginalClient,
-	}
-
-	duc.onControl = RealOwnedNamespaceControl{
-		onLister: onInformer.Lister().OwnedNamespaces(dispatch_namespace),
-		original_client: clientSets.OriginalClient,
-		netsys_client: clientSets.NetsysClient,
-	}
-
-	duc.saListerSynced = saInformer.Informer().HasSynced
-
-	return duc
+	return onc
 }
 
 // Run begins watching and syncing.
-func (duc *DispatchUserController) Run(workers int, stopCh <-chan struct{}) {
+func (onc *OwnedNamespaceController) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 
-	fmt.Printf("Starting %s controller\n", duc.Kind)
-	defer fmt.Printf("Shutting down %v controller\n", duc.Kind)
+	fmt.Printf("Starting %s controller\n", onc.Kind)
+	defer fmt.Printf("Shutting down %v controller\n", onc.Kind)
 
-	for !(duc.duListerSynced() && duc.onListerSynced() && duc.saListerSynced()) {
+	for !onc.onListerSynced() {
 		time.Sleep(time.Second)
 	}
 
 	for i := 0; i < workers; i++ {
-		go wait.Until(duc.worker, time.Second, stopCh)
+		go wait.Until(onc.worker, time.Second, stopCh)
 	}
 
 	<-stopCh
@@ -132,89 +113,60 @@ func (duc *DispatchUserController) Run(workers int, stopCh <-chan struct{}) {
 
 // worker runs a worker thread that just dequeues items, processes them, and marks them done.
 // It enforces that the syncHandler is never invoked concurrently with the same key.
-func (duc *DispatchUserController) worker() {
-	fmt.Printf("Starting a %s worker\n", duc.Kind)
-	for duc.processNextWorkItem() {
+func (onc *OwnedNamespaceController) worker() {
+	fmt.Printf("Starting a %s worker\n", onc.Kind)
+	for onc.processNextWorkItem() {
 	}
 }
 
-func (duc *DispatchUserController) processNextWorkItem() bool {
-	event := <- duc.workqueue
+func (onc *OwnedNamespaceController) processNextWorkItem() bool {
+	event := <- onc.workqueue
 
 	var err error
 	if event.action == "add" {
-		err = duc.addHandler(event)
+		err = onc.addHandler(event)
 	} else if event.action == "update" {
-		err = duc.syncOwnedNamespaces(event.new)
+		// drop
+		return true
 	} else if event.action == "delete" {
-		err = duc.deleteHandler(event)
+		err = onc.deleteHandler(event)
 	} else {
 		err = fmt.Errorf("event action not recoginized %s", event.action)
 	}
 
 	if err != nil {
-		fmt.Printf("Error processing DispatchUser %s: %s", event.action, err)
+		fmt.Printf("Error processing OwnedNamespace %s: %s", event.action, err)
 		return false
 	}
 
 	return true
 }
 
-func (duc *DispatchUserController) addHandler(e DispatchUserEvent) error {
-	_, err := duc.saControl.Create(e.new.Spec.UserID)
-	if err != nil {
-		return err
+func (onc *OwnedNamespaceController) addHandler(e OwnedNamespaceEvent) error {
+	rb := rbac_v1.RoleBinding{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      controller.NameFunc(e.new.Spec.OwnerID, e.new.Namespace),
+			Namespace: e.new.Namespace,
+		},
+		Subjects: []rbac_v1.Subject{
+			{
+				Kind: "ServiceAccount",
+				Name: e.new.Spec.OwnerID,
+				Namespace: dispatchNamespace,
+			},
+		},
+		RoleRef: rbac_v1.RoleRef{
+			Kind: "ClusterRole",
+			Name: "edit",
+			APIGroup: "rbac.authorization.k8s.io",
+		},
 	}
-	return duc.syncOwnedNamespaces(e.new)
+
+	_, err := onc.clientsets.OriginalClient.RbacV1().RoleBindings(e.new.Namespace).Create(&rb)
+
+	return err
 }
 
-func (duc *DispatchUserController) syncOwnedNamespaces(u *netsys_v1.DispatchUser) error {
-	currentNamespaces, err := duc.onControl.ListForUser(u.Spec.UserID)
-	if err != nil {
-		return err
-	}
-	currentSet := make(map[string]bool, len(currentNamespaces))
-	futureSet := make(map[string]bool, len(u.Spec.Namespaces))
-
-	for _, n := range currentNamespaces {
-		currentSet[n.Spec.Namespace] = true
-	}
-	for _, n := range u.Spec.Namespaces {
-		futureSet[n] = true
-	}
-
-	for k := range currentSet {
-		if _, ok := futureSet[k]; !ok {
-			err = duc.onControl.Delete(u.Spec.UserID, k)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	for k := range futureSet {
-		if _, ok := currentSet[k]; !ok {
-			_, err = duc.onControl.Create(u.Spec.UserID, k)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (duc *DispatchUserController) deleteHandler(e DispatchUserEvent) error {
-	err := duc.saControl.Delete(e.new.Spec.UserID)
-	if err != nil {
-		return err
-	}
-	currentNamespaces, err := duc.onControl.ListForUser(e.old.Spec.UserID)
-	for _, n := range currentNamespaces {
-		err = duc.onControl.Delete(e.old.Spec.UserID, n.Spec.Namespace)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func (onc *OwnedNamespaceController) deleteHandler(e OwnedNamespaceEvent) error {
+	return onc.clientsets.OriginalClient.RbacV1().RoleBindings(e.old.Namespace).Delete(e.old.Spec.OwnerID, nil)
 }

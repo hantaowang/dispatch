@@ -6,8 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"fmt"
 )
 
@@ -35,12 +34,12 @@ func (rsac RealServiceAccountControl) Create(name string) (*v1.ServiceAccount, e
 	if _, err := rsac.Get(name); err != nil {
 		if errors.IsNotFound(err) {
 			sa := v1.ServiceAccount{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      name,
-					Namespace: dispatch_namespace,
+					Namespace: dispatchNamespace,
 				},
 			}
-			return rsac.client.CoreV1().ServiceAccounts(dispatch_namespace).Create(&sa)
+			return rsac.client.CoreV1().ServiceAccounts(dispatchNamespace).Create(&sa)
 		} else {
 			return nil, err
 		}
@@ -51,7 +50,7 @@ func (rsac RealServiceAccountControl) Create(name string) (*v1.ServiceAccount, e
 
 func (rsac RealServiceAccountControl) Delete(name string) error {
 	if _, err := rsac.Get(name); err != nil && errors.IsNotFound(err){
-		return rsac.client.CoreV1().ServiceAccounts(dispatch_namespace).Delete(name, nil)
+		return rsac.client.CoreV1().ServiceAccounts(dispatchNamespace).Delete(name, nil)
 	} else {
 		return err
 	}

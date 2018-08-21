@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	dispatchNamespace = "dispatch"
+	dispatch_namespace = "dispatch"
 )
 
 // NamespaceController is responsible for performing actions dependent upon a namespace phase
@@ -97,12 +97,12 @@ func NewDispatchUserController(
 	duc.onListerSynced = onInformer.Informer().HasSynced
 
 	duc.saControl = RealServiceAccountControl{
-		saLister: saInformer.Lister().ServiceAccounts(dispatchNamespace),
+		saLister: saInformer.Lister().ServiceAccounts(dispatch_namespace),
 		client: clientSets.OriginalClient,
 	}
 
 	duc.onControl = RealOwnedNamespaceControl{
-		onLister: onInformer.Lister().OwnedNamespaces(dispatchNamespace),
+		onLister: onInformer.Lister().OwnedNamespaces(dispatch_namespace),
 		original_client: clientSets.OriginalClient,
 		netsys_client: clientSets.NetsysClient,
 	}

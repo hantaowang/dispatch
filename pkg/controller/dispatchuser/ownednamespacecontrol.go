@@ -4,7 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	netsys_v1 "github.com/hantaowang/dispatch/pkg/apis/netsysio/v1"
 	lister_v1 "github.com/hantaowang/dispatch/pkg/client/listers/netsysio/v1"
 	netsys_client "github.com/hantaowang/dispatch/pkg/client/clientset/versioned"
@@ -39,13 +39,20 @@ func (ronc RealOwnedNamespaceControl) Get(owner, namespace string) (*netsys_v1.O
 }
 
 func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v1.OwnedNamespace, error) {
-	nSpec := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
-	ronc.original_client.CoreV1().Namespaces().Create(nSpec)
+
+	_, err := ronc.original_client.CoreV1().Namespaces().Get(namespace, meta_v1.GetOptions{})
+	if errors.IsNotFound(err) {
+		nSpec := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: namespace}}
+		nil, err = ronc.original_client.CoreV1().Namespaces().Create(nSpec)
+	}
+	if err != nil {
+		return nil, err
+	}
 
 	if _, err := ronc.Get(owner, namespace); err != nil {
 		if errors.IsNotFound(err) {
 			on := netsys_v1.OwnedNamespace{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: meta_v1.ObjectMeta{
 					Name: nameFunc(owner, namespace),
 					Namespace: namespace,
 					Labels: map[string]string{
@@ -57,7 +64,7 @@ func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v
 					Namespace: namespace,
 				},
 			}
-			return ronc.netsys_client.NetsysV1().OwnedNamespaces(dispatch_namespace).Create(&on)
+			return ronc.netsys_client.NetsysV1().OwnedNamespaces(dispatchNamespace).Create(&on)
 		} else {
 			return nil, err
 		}
@@ -68,7 +75,7 @@ func (ronc RealOwnedNamespaceControl) Create(owner, namespace string) (*netsys_v
 
 func (ronc RealOwnedNamespaceControl) Delete(owner, namespace string) error {
 	if _, err := ronc.Get(owner, namespace); err != nil && errors.IsNotFound(err){
-		return ronc.netsys_client.NetsysV1().OwnedNamespaces(dispatch_namespace).Delete(nameFunc(owner, namespace), nil)
+		return ronc.netsys_client.NetsysV1().OwnedNamespaces(dispatchNamespace).Delete(nameFunc(owner, namespace), nil)
 	} else {
 		return err
 	}

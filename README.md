@@ -52,4 +52,6 @@ was bored one weekend. But none the less, here are some work that I think would 
 - Automatically set up the authentication in `~/.kube/config`.
 - Use a custom `ClusterRole` rather than the default `edit` to scope permissions further.
 - In the Python server validate that the User has permission to access the requested namespace.
+- The ability to enforce resource limits on namespaces.
+- Integration with GKE or EKS that allows auto scaling of the cluster based on usage.
 

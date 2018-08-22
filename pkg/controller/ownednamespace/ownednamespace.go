@@ -144,7 +144,6 @@ func (onc *OwnedNamespaceController) processNextWorkItem() bool {
 		fmt.Printf("Error processing OwnedNamespace %s: %s", event.action, err)
 		return false
 	}
-	fmt.Println("Processed OwnedNamespace %s", event.action)
 
 	return true
 }
